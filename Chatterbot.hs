@@ -157,13 +157,20 @@ matchCheck = matchTest == Just testSubstitutions
 
 -- Applying a single pattern
 transformationApply :: Eq a => a -> ([a] -> [a]) -> [a] -> ([a], [a]) -> Maybe [a]
-transformationApply _ _ _ _ = Nothing
+-- transformationApply _ _ _ _ = Nothing
 {- TO BE WRITTEN -}
-
+transformationApply wildcard transformFn input (pattern, substitution) =
+  case match wildcard pattern input of
+    Just matchedSublist -> Just (transformFn matchedSublist ++ drop (length pattern) input)
+    Nothing -> Nothing
 
 -- Applying a list of patterns until one succeeds
 transformationsApply :: Eq a => a -> ([a] -> [a]) -> [([a], [a])] -> [a] -> Maybe [a]
-transformationsApply _ _ _ _ = Nothing
+-- transformationsApply _ _ _ _ = Nothing
 {- TO BE WRITTEN -}
-
+transformationsApply _ _ [] _ = Nothing
+transformationsApply wildcard transformFn ((pattern, substitution):patterns) input =
+  case transformationApply wildcard transformFn input (pattern, substitution) of
+    Just result -> Just result
+    Nothing -> transformationsApply wildcard transformFn patterns input
 
