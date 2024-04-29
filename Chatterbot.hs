@@ -2,11 +2,12 @@ module Chatterbot where
   import Utilities
   import System.Random
   import Data.Char
+  import Data.Maybe (fromMaybe)
 
 chatterbot :: String -> [(String, [String])] -> IO ()
 chatterbot botName botRules = do
-    putStrLn ("\n\nHi! I am " ++ botName ++ ". How are you?")
-    botloop
+  putStrLn ("\n\nHi! I am " ++ botName ++ ". How are you?")
+  botloop
   where
     brain = rulesCompile botRules
     botloop = do
@@ -27,16 +28,23 @@ type BotBrain = [(Phrase, [Phrase])]
 
 stateOfMind :: BotBrain -> IO (Phrase -> Phrase)
 {- TO BE WRITTEN -}
-stateOfMind _ = return id
+stateOfMind brain = do
+  let (_, responses) = brain !! randIndex
+  let response = responses !! randIndex
+  return (rulesApply [(["*"], response)])
 
 rulesApply :: [PhrasePair] -> Phrase -> Phrase
 {- TO BE WRITTEN -}
-rulesApply _ = id
+rulesApply pairs phrase =
+  case transformationsApply '*' id pairs phrase of
+    Just result -> result
+    Nothing -> phrase
 
 reflect :: Phrase -> Phrase
 {- TO BE WRITTEN -}
-reflect = id
+reflect = map (\word -> fromMaybe word (lookup word reflections))
 
+reflections :: [(String, String)]
 reflections =
   [ ("am",     "are"),
     ("was",    "were"),
@@ -70,7 +78,7 @@ prepare = reduce . words . map toLower . filter (not . flip elem ".,:;*!#%&|")
 
 rulesCompile :: [(String, [String])] -> BotBrain
 {- TO BE WRITTEN -}
-rulesCompile _ = []
+rulesCompile = map (\(pattern, responses) -> (words pattern, map words responses))
 
 
 --------------------------------------
@@ -96,7 +104,11 @@ reduce = reductionsApply reductions
 
 reductionsApply :: [PhrasePair] -> Phrase -> Phrase
 {- TO BE WRITTEN -}
-reductionsApply _ = id
+reductionsApply [] phrase = phrase
+reductionsApply ((pattern, substitution):rest) phrase =
+  case match '*' pattern phrase of
+    Just matched -> substitute '*' substitution matched ++ reductionsApply rest phrase
+    Nothing -> reductionsApply rest phrase
 
 
 -------------------------------------------------------
@@ -157,7 +169,6 @@ matchCheck = matchTest == Just testSubstitutions
 
 -- Applying a single pattern
 transformationApply :: Eq a => a -> ([a] -> [a]) -> [a] -> ([a], [a]) -> Maybe [a]
--- transformationApply _ _ _ _ = Nothing
 {- TO BE WRITTEN -}
 transformationApply wildcard transformFn input (pattern, substitution) =
   case match wildcard pattern input of
@@ -166,7 +177,6 @@ transformationApply wildcard transformFn input (pattern, substitution) =
 
 -- Applying a list of patterns until one succeeds
 transformationsApply :: Eq a => a -> ([a] -> [a]) -> [([a], [a])] -> [a] -> Maybe [a]
--- transformationsApply _ _ _ _ = Nothing
 {- TO BE WRITTEN -}
 transformationsApply _ _ [] _ = Nothing
 transformationsApply wildcard transformFn ((pattern, substitution):patterns) input =
