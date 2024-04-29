@@ -1,7 +1,7 @@
 module Chatterbot where
-import Utilities
-import System.Random
-import Data.Char
+  import Utilities
+  import System.Random
+  import Data.Char
 
 chatterbot :: String -> [(String, [String])] -> IO ()
 chatterbot botName botRules = do
@@ -107,6 +107,7 @@ reductionsApply _ = id
 substitute :: Eq a => a -> [a] -> [a] -> [a]
 substitute _ _ _ = []
 {- TO BE WRITTEN -}
+substitute wildcard p = foldr (\x acc -> if x == wildcard then p else x : acc) []
 
 
 -- Tries to match two lists. If they match, the result consists of the sublist
@@ -114,14 +115,25 @@ substitute _ _ _ = []
 match :: Eq a => a -> [a] -> [a] -> Maybe [a]
 match _ _ _ = Nothing
 {- TO BE WRITTEN -}
+match wildcard pattern list =
+  case dropWhile (/= wildcard) (zipWith (\x y -> if x == y then Just y else Nothing) pattern list) of
+    [] -> Nothing
+    (_, rest) -> Just (takeWhile (/= wildcard) rest)
 
 
 -- Helper function to match
 singleWildcardMatch, longerWildcardMatch :: Eq a => [a] -> [a] -> Maybe [a]
-singleWildcardMatch (wc:ps) (x:xs) = Nothing
+singleWildcardMatch (wc:ps) (x:xs)
 {- TO BE WRITTEN -}
-longerWildcardMatch (wc:ps) (x:xs) = Nothing
+  | wc == x = Just xs  -- If the first element of the pattern is a wildcard and matches the corresponding element in the list, we consume that element and return the rest of the list
+  | otherwise = Nothing -- If the wildcard doesn't match, we return Nothing
+
+longerWildcardMatch (wc:ps) (x:xs)
 {- TO BE WRITTEN -}
+  | wc == x = case match wc ps xs of -- If the first element of the pattern is a wildcard and matches the corresponding element in the list, we use match to find the sublist that matches the remaining pattern
+    Just r -> Just r
+    Nothing -> longerWildcardMatch (wc:ps) xs -- If there's no match, we continue searching for a match with the remaining list
+  | otherwise = Nothing -- If the wildcard doesn't match, we return Nothing
 
 
 
